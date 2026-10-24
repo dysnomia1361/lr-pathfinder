@@ -15,7 +15,7 @@ import numpy as np
 import joblib
 import os
 
-# ---------- Configuración de página ----------
+# Page config
 st.set_page_config(
     page_title="Predicción de ACV",
     layout="centered",
@@ -27,7 +27,7 @@ st.markdown(
     "Introduce los datos clínicos para obtener una estimación de riesgo."
 )
 
-# ---------- Carga del modelo (cacheadA para no recargar en cada interacción) ----------
+# Loading model
 @st.cache_resource
 def load_model():
     base = os.path.dirname(__file__)
@@ -36,7 +36,7 @@ def load_model():
 
 model = load_model()
 
-# ---------- Formulario de entrada ----------
+# Input Format
 with st.form("patient_form"):
     col1, col2 = st.columns(2)
 
@@ -66,9 +66,9 @@ with st.form("patient_form"):
 
     submitted = st.form_submit_button("Calcular riesgo")
 
-# ---------- Predicción ----------
+# Prediction
 if submitted:
-    # El Pipeline espera exactamente las mismas columnas que en el entrenamiento
+    
     input_df = pd.DataFrame(
         [{
             "gender": gender,
@@ -85,21 +85,21 @@ if submitted:
     )
 
     proba = model.predict_proba(input_df)[0, 1]
-    # Umbral operativo de la tesis (F2 óptimo sobre OOF): 0.53 para LR
+    # Threshold for the LR model
     threshold = 0.53
     pred = int(proba >= threshold)
 
     st.divider()
     if pred == 1:
-        st.error(f"**Riesgo elevado detectado** (probabilidad: {proba:.1%})")
+        st.error(f"Riesgo elevado detectado (probabilidad: {proba:.1%})")
     else:
-        st.success(f"**Riesgo no elevado** (probabilidad: {proba:.1%})")
+        st.success(f"Riesgo no elevado (probabilidad: {proba:.1%})")
 
     st.caption(
         f"Umbral de decisión: {threshold:.2f} (optimizado para Recall/F2). "
         "Este resultado es orientativo y no sustituye el criterio médico."
     )
 
-    # Mostrar los datos introducidos como tabla (útil para la defensa)
+    # Show input data as a table
     with st.expander("Ver datos introducidos"):
         st.dataframe(input_df.T.rename(columns={0: "Valor"}))
